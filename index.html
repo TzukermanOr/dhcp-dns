@@ -1,1 +1,1551 @@
 
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>שיעור DHCP & DNS - 5 שעות | Windows Server</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b1020;
+    --bg-2: #111733;
+    --panel: #161d3d;
+    --panel-2: #1d2547;
+    --ink: #e7ecff;
+    --ink-dim: #aab3d8;
+    --accent: #6df0c8;
+    --accent-2: #7aa8ff;
+    --warn: #ffb84d;
+    --danger: #ff6b8a;
+    --line: #2a3266;
+    --code-bg: #0a0e1f;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 14px;
+  }
+  *,*::before,*::after { box-sizing: border-box; }
+  html,body { margin:0; padding:0; }
+  body {
+    font-family: 'Heebo', sans-serif;
+    background:
+      radial-gradient(1200px 600px at 90% -10%, rgba(122,168,255,.15), transparent 60%),
+      radial-gradient(800px 500px at -10% 30%, rgba(109,240,200,.10), transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+    color: var(--ink);
+    line-height: 1.75;
+    min-height: 100vh;
+    font-size: 16px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* HERO */
+  .hero {
+    padding: 56px 36px;
+    border-radius: var(--radius);
+    background:
+      linear-gradient(135deg, rgba(109,240,200,.10), rgba(122,168,255,.10)),
+      linear-gradient(180deg, #131a3a, #0f1530);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content:"";
+    position:absolute; inset:-2px;
+    background: conic-gradient(from 120deg, transparent, rgba(109,240,200,.35), transparent 40%);
+    filter: blur(40px); opacity:.5; pointer-events:none;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 4vw, 44px);
+    margin: 0 0 10px;
+    font-weight: 900;
+    letter-spacing: -.5px;
+    position: relative;
+  }
+  .hero .sub {
+    color: var(--ink-dim); font-size: 18px; margin-top: 8px;
+    position: relative;
+  }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; position: relative;}
+  .badge {
+    background: rgba(122,168,255,.12);
+    border: 1px solid rgba(122,168,255,.35);
+    color: #cfe0ff;
+    padding: 6px 12px; border-radius: 999px; font-size: 13px;
+  }
+  .badge.green { background: rgba(109,240,200,.10); border-color: rgba(109,240,200,.35); color:#c5fbe7; }
+
+  /* TOC */
+  .toc {
+    margin-top: 24px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 26px;
+  }
+  .toc h2 { margin: 0 0 12px; font-size: 22px; }
+  .toc ol { padding-inline-start: 22px; margin: 0; }
+  .toc li { padding: 4px 0; }
+  .toc a { color: var(--accent-2); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .hours { color: var(--warn); font-weight: 700; margin-inline-start: 8px; font-size: 13px; }
+
+  /* SECTIONS */
+  section.hour {
+    margin: 36px 0;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .hour-head {
+    padding: 22px 26px;
+    background: linear-gradient(135deg, rgba(122,168,255,.10), rgba(109,240,200,.06));
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .hour-head h2 { margin: 0; font-size: 26px; }
+  .hour-head .time {
+    color: var(--accent); font-weight: 700; font-size: 14px;
+    background: rgba(109,240,200,.10);
+    border: 1px solid rgba(109,240,200,.35);
+    border-radius: 999px;
+    padding: 6px 12px;
+  }
+  .hour-body { padding: 24px 26px; }
+
+  h3 { font-size: 20px; margin: 24px 0 10px; color: #d8e2ff; }
+  h4 { font-size: 17px; margin: 16px 0 8px; color: var(--accent-2); }
+
+  p { margin: 8px 0; }
+  ul, ol { padding-inline-start: 22px; }
+  li { margin: 4px 0; }
+
+  /* BOXES */
+  .box {
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 14px 0;
+  }
+  .box.tip { border-color: rgba(109,240,200,.35); background: rgba(109,240,200,.06); }
+  .box.warn { border-color: rgba(255,184,77,.35); background: rgba(255,184,77,.06); }
+  .box.danger { border-color: rgba(255,107,138,.35); background: rgba(255,107,138,.06); }
+  .box .title {
+    font-weight: 700; margin-bottom: 6px; font-size: 14px; letter-spacing:.3px;
+  }
+  .box.tip .title { color: var(--accent); }
+  .box.warn .title { color: var(--warn); }
+  .box.danger .title { color: var(--danger); }
+
+  /* DEFINITIONS */
+  .definition {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 14px;
+    padding: 12px 14px;
+    border-left: 0;
+    border-right: 4px solid var(--accent-2);
+    background: rgba(122,168,255,.05);
+    border-radius: 8px;
+    margin: 10px 0;
+  }
+  .definition .term {
+    font-weight: 700; color: var(--accent-2); font-family:'JetBrains Mono', monospace; font-size: 14px;
+  }
+
+  /* CODE */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    direction: ltr;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 12px 0;
+  }
+  code { font-family: 'JetBrains Mono', monospace; color: #cdebd6; background: rgba(109,240,200,.08); padding: 1px 6px; border-radius: 4px; font-size: 13.5px;}
+  pre code { background: none; padding: 0; color: #d6ffe8; }
+  .cmd-prompt { color: var(--accent); }
+  .cmd-comment { color: #6b7ab0; }
+  .cmd-out { color: #cfd6f5; }
+
+  /* STEPS */
+  .steps { counter-reset: stp; padding: 0; list-style: none; margin: 14px 0; }
+  .steps > li {
+    counter-increment: stp;
+    padding: 14px 18px 14px 18px;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-right: 4px solid var(--accent);
+    border-radius: 10px;
+    margin: 10px 0;
+    position: relative;
+    padding-inline-start: 56px;
+  }
+  .steps > li::before {
+    content: counter(stp);
+    position: absolute;
+    inset-inline-start: 14px;
+    top: 14px;
+    width: 30px; height: 30px;
+    background: var(--accent);
+    color: #0b1020;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-weight: 900;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .steps strong { color: #fff; }
+
+  /* COMPARE */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 14px 0;
+  }
+  .compare > div {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .compare .pros { border-color: rgba(109,240,200,.35); }
+  .compare .cons { border-color: rgba(255,107,138,.35); }
+  .compare h4 { margin-top: 0; }
+  @media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--line); padding: 10px; text-align: right; }
+  th { background: rgba(122,168,255,.10); color: #d8e2ff; }
+  tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+
+  /* DIAGRAMS */
+  .diagram {
+    background: #0c1230;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .diagram svg { max-width: 100%; height: auto; }
+  .diagram .caption {
+    color: var(--ink-dim);
+    font-size: 13px;
+    margin-top: 8px;
+  }
+
+  /* RECORDS GRID */
+  .records {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .record {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .record .rtype {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    background: rgba(109,240,200,.12);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  /* QA */
+  details {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin: 8px 0;
+  }
+  details > summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #d8e2ff;
+    padding: 6px 0;
+  }
+  details[open] > summary { color: var(--accent); }
+
+  /* QUIZ */
+  .quiz {
+    background: linear-gradient(135deg, rgba(122,168,255,.06), rgba(109,240,200,.04));
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin: 12px 0;
+  }
+  .quiz .q { font-weight: 700; color: #fff; }
+
+  /* SUMMARY CHEAT */
+  .cheat {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+    margin: 16px 0;
+  }
+  .cheat h3 { margin-top: 0; }
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .cheat-grid .cell {
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+  .cheat-grid .cell b { color: var(--accent); }
+
+  footer {
+    margin: 40px 0 20px;
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 13px;
+  }
+
+  /* small tweaks */
+  a { color: var(--accent-2); }
+  a:hover { color: var(--accent); }
+  hr { border: 0; border-top: 1px dashed var(--line); margin: 18px 0; }
+  .kbd {
+    display:inline-block;
+    border:1px solid var(--line);
+    background:#0e1330;
+    padding:1px 7px; border-radius:6px;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px;
+    color:#d8e2ff;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>🌐 שיעור DHCP &amp; DNS - Windows Server</h1>
+  <div class="sub">תכנית הוראה מקיפה לחמש שעות - מאפס ועד הגדרה מלאה</div>
+  <div class="badges">
+    <span class="badge">חסרי ידע מוקדם</span>
+    <span class="badge green">Windows Server 2019/2022/2025</span>
+    <span class="badge">תיאוריה + מעבדה</span>
+    <span class="badge green">5 שעות אקדמיות</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<nav class="toc">
+  <h2>📚 מבנה השיעור</h2>
+  <ol>
+    <li><a href="#hour1">שעה 1 - יסודות תקשורת רשתות ו-IP</a><span class="hours">60 דק'</span></li>
+    <li><a href="#hour2">שעה 2 - הכרת DHCP ותהליך DORA</a><span class="hours">60 דק'</span></li>
+    <li><a href="#hour3">שעה 3 - התקנה והגדרת DHCP Server</a><span class="hours">60 דק'</span></li>
+    <li><a href="#hour4">שעה 4 - הכרת DNS, אזורים ו-Records</a><span class="hours">60 דק'</span></li>
+    <li><a href="#hour5">שעה 5 - התקנת DNS, Reverse Zone ופקודות CMD</a><span class="hours">60 דק'</span></li>
+    <li><a href="#cheat">🧠 דף סיכום וחזרה</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================ -->
+<!-- HOUR 1 -->
+<!-- ============================================ -->
+<section class="hour" id="hour1">
+  <div class="hour-head">
+    <h2>שעה 1 - יסודות תקשורת רשתות ו-IP</h2>
+    <span class="time">⏱ 0:00 - 1:00</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="box tip">
+      <div class="title">🎯 מטרת השעה</div>
+      להבין מה זו רשת, מה זו כתובת IP, ולמה בכלל צריך DHCP ו-DNS. בלי הבסיס הזה - שום דבר אחר לא יהיה ברור.
+    </div>
+
+    <h3>1.1 מה זה Internet Protocol (IP)?</h3>
+    <p>
+      <b>Internet Protocol</b> זה אוסף כללים מוסכמים שמגדירים איך מידע נשלח ברשת. בלי כללים משותפים, מחשב אחד לא ידע להבין מחשב אחר -
+      בדיוק כמו ששני אנשים שמדברים שפות שונות לא יכולים לתקשר.
+    </p>
+    <p>
+      כל מכשיר ברשת (מחשב, נייד, מדפסת, נתב, שרת) חייב <b>כתובת IP</b> - מספר ייחודי שמזהה אותו ברשת.
+      בלי כתובת IP, אי אפשר לשלוח אליו או לקבל ממנו מידע.
+    </p>
+
+    <div class="definition">
+      <span class="term">IPv4</span>
+      <span>גרסה 4 של פרוטוקול IP - הפופולרית ביותר היום. כתובת בת 32 ביט בפורמט <code>192.168.1.10</code> (ארבעה מספרים 0-255 מופרדים בנקודות).</span>
+    </div>
+    <div class="definition">
+      <span class="term">IPv6</span>
+      <span>גרסה 6 - חדשה יותר, 128 ביט, נראית כך: <code>2001:0db8:85a3::8a2e:0370:7334</code>. נולדה כי IPv4 נגמר (כמעט).</span>
+    </div>
+
+    <h3>1.2 כתובות פרטיות מול ציבוריות (Private vs Public)</h3>
+
+    <div class="compare">
+      <div class="pros">
+        <h4>🏠 Private IP (פרטית)</h4>
+        <p>בשימוש ברשתות פנימיות שלא מחוברות ישירות לאינטרנט. כל ארגון יכול להשתמש בהן בלי לבקש רשות מאף אחד.</p>
+        <p><b>טווחים שמורים (RFC 1918):</b></p>
+        <ul>
+          <li><code>10.0.0.0 - 10.255.255.255</code></li>
+          <li><code>172.16.0.0 - 172.31.255.255</code></li>
+          <li><code>192.168.0.0 - 192.168.255.255</code></li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>🌍 Public IP (ציבורית)</h4>
+        <p>כתובות שמוקצות לכל מי שמתחבר לאינטרנט. כל כתובת ציבורית בעולם היא ייחודית.</p>
+        <p>כל ספק אינטרנט (ISP) מקצה ללקוחותיו כתובת ציבורית, ומספר ה-IPs הציבוריים בעולם מוגבל - לכן הומצא ה-NAT.</p>
+      </div>
+    </div>
+
+    <div class="box warn">
+      <div class="title">⚠️ למה זה חשוב לפנטסטרים?</div>
+      בסקירה (recon) חשוב להבחין מיד אם רואים כתובת פרטית או ציבורית - זה אומר לך אם המכשיר חשוף ישירות לאינטרנט או יושב מאחורי NAT.
+    </div>
+
+    <h4>NAT - הגשר בין פנימי לחיצוני</h4>
+    <p>
+      <b>Network Address Translation</b> זה המנגנון שמאפשר למאות מכשירים עם כתובות פרטיות לצאת לאינטרנט דרך כתובת ציבורית אחת.
+      הנתב הביתי שלך עושה NAT כל יום - הוא מתרגם את <code>192.168.1.X</code> שלך לכתובת הציבורית של בזק/הוט/סלקום.
+    </p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7aa8ff"/>
+          </marker>
+        </defs>
+        <!-- LAN side -->
+        <rect x="20" y="30" width="200" height="160" rx="10" fill="#1a224a" stroke="#2a3266"/>
+        <text x="120" y="55" text-anchor="middle" fill="#aab3d8" font-size="13" font-family="Heebo">רשת פנימית (LAN)</text>
+        <rect x="40" y="80" width="80" height="40" rx="6" fill="#0e1432" stroke="#6df0c8"/>
+        <text x="80" y="105" text-anchor="middle" fill="#6df0c8" font-size="11" font-family="JetBrains Mono">10.0.0.2</text>
+        <rect x="130" y="80" width="80" height="40" rx="6" fill="#0e1432" stroke="#6df0c8"/>
+        <text x="170" y="105" text-anchor="middle" fill="#6df0c8" font-size="11" font-family="JetBrains Mono">10.0.0.3</text>
+        <rect x="40" y="140" width="80" height="40" rx="6" fill="#0e1432" stroke="#6df0c8"/>
+        <text x="80" y="165" text-anchor="middle" fill="#6df0c8" font-size="11" font-family="JetBrains Mono">10.0.0.4</text>
+        <rect x="130" y="140" width="80" height="40" rx="6" fill="#0e1432" stroke="#6df0c8"/>
+        <text x="170" y="165" text-anchor="middle" fill="#6df0c8" font-size="11" font-family="JetBrains Mono">10.0.0.5</text>
+
+        <!-- Router/NAT -->
+        <rect x="290" y="80" width="120" height="60" rx="10" fill="#1a224a" stroke="#7aa8ff" stroke-width="2"/>
+        <text x="350" y="105" text-anchor="middle" fill="#7aa8ff" font-size="13" font-family="Heebo">נתב + NAT</text>
+        <text x="350" y="125" text-anchor="middle" fill="#aab3d8" font-size="10" font-family="JetBrains Mono">10.0.0.1 / 212.x.x.x</text>
+
+        <!-- Arrows -->
+        <line x1="220" y1="110" x2="285" y2="110" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="415" y1="110" x2="480" y2="110" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr)"/>
+
+        <!-- Internet -->
+        <rect x="485" y="50" width="195" height="120" rx="10" fill="#1a224a" stroke="#2a3266"/>
+        <text x="582" y="75" text-anchor="middle" fill="#aab3d8" font-size="13" font-family="Heebo">אינטרנט</text>
+        <circle cx="582" cy="115" r="30" fill="none" stroke="#ffb84d" stroke-width="2"/>
+        <text x="582" y="120" text-anchor="middle" fill="#ffb84d" font-size="12" font-family="JetBrains Mono">Public IP</text>
+        <text x="582" y="155" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="JetBrains Mono">212.179.252.73</text>
+      </svg>
+      <div class="caption">תרגום כתובות (NAT) - מספר מכשירים פנימיים יוצאים החוצה דרך כתובת ציבורית אחת</div>
+    </div>
+
+    <h3>1.3 מחלקות IPv4 (Classful)</h3>
+    <p>
+      בעבר חילקו את טווח IPv4 למחלקות לפי גודל. כיום משתמשים בעיקר ב-CIDR (notation של /24 וכו'), אבל המונחים נשארו.
+    </p>
+
+    <table>
+      <thead>
+        <tr><th>מחלקה</th><th>Prefix</th><th>טווח פרטי</th><th>מס' Hosts אפשרי</th><th>שימוש אופייני</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Class A</td><td>/8</td><td><code>10.0.0.0 - 10.255.255.255</code></td><td>16,777,214</td><td>ארגונים ענקיים, ספקי ISP</td></tr>
+        <tr><td>Class B</td><td>/16</td><td><code>172.16.0.0 - 172.31.255.255</code></td><td>65,534</td><td>ארגונים בינוניים-גדולים</td></tr>
+        <tr><td>Class C</td><td>/24</td><td><code>192.168.0.0 - 192.168.255.255</code></td><td>254</td><td>רשתות ביתיות, משרדים קטנים</td></tr>
+      </tbody>
+    </table>
+
+    <div class="box tip">
+      <div class="title">💡 למה "מינוס 2"?</div>
+      בכל סאבנט שתי כתובות שמורות:
+      <ul>
+        <li><b>כתובת הרשת</b> (הראשונה, למשל <code>192.168.1.0</code>) - מזהה את הרשת עצמה.</li>
+        <li><b>כתובת ה-Broadcast</b> (האחרונה, למשל <code>192.168.1.255</code>) - שידור לכל הרשת.</li>
+      </ul>
+      לכן ב-/24 יש 256 כתובות אבל רק 254 שמישות ל-hosts.
+    </div>
+
+    <h3>1.4 כתובות מערכת מיוחדות</h3>
+
+    <h4>🔄 Loopback - 127.0.0.0/8</h4>
+    <p>
+      כתובת שמייצגת את המחשב <b>עצמו</b>. כל מה שנשלח אליה חוזר אליה. הכתובת המוכרת ביותר היא <code>127.0.0.1</code>.
+    </p>
+    <p>שימושים נפוצים:</p>
+    <ul>
+      <li>בדיקה שהמחסנית הרשתית של המחשב עובדת.</li>
+      <li>הרצת שרת מקומי שרק המחשב עצמו ניגש אליו (למשל פיתוח אתר ב-<code>http://127.0.0.1:8080</code>).</li>
+      <li>גם השם <code>localhost</code> מצביע עליה.</li>
+    </ul>
+
+    <h4>🚫 APIPA - 169.254.0.0/16</h4>
+    <p>
+      <b>Automatic Private IP Addressing</b> - מה שקורה כאשר המחשב לא מצליח להגיע ל-DHCP. הוא מקצה לעצמו כתובת מהטווח <code>169.254.X.X</code>
+      כדי שיוכל לכל הפחות לתקשר עם מכשירים אחרים באותה רשת מקומית.
+    </p>
+
+    <div class="box danger">
+      <div class="title">🚨 איך מזהים בעיית DHCP?</div>
+      אם פקודת <code>ipconfig</code> מראה לך כתובת שמתחילה ב-<code>169.254.</code> - אין תקשורת עם DHCP.
+      סיבות אפשריות: כבל לא מחובר, DHCP נפל, הרשת מנותקת מהשרת, הגדרת VLAN שגויה.
+    </div>
+
+    <div class="quiz">
+      <div class="q">📝 בדיקה עצמית:</div>
+      <details><summary>איזו כתובת היא פרטית? <code>10.5.20.1</code> או <code>74.125.224.72</code>?</summary>
+        <p><code>10.5.20.1</code> - היא בתוך טווח Class A הפרטי (<code>10.0.0.0/8</code>). השנייה היא כתובת ציבורית של גוגל.</p>
+      </details>
+      <details><summary>מה זה אומר שמחשב קיבל את הכתובת <code>169.254.10.5</code>?</summary>
+        <p>שהמחשב לא הצליח להגיע לשרת DHCP, אז הוא הקצה לעצמו כתובת APIPA. צריך לבדוק את החיבור והגדרות הרשת.</p>
+      </details>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOUR 2 -->
+<!-- ============================================ -->
+<section class="hour" id="hour2">
+  <div class="hour-head">
+    <h2>שעה 2 - הכרת DHCP ותהליך DORA</h2>
+    <span class="time">⏱ 1:00 - 2:00</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="box tip">
+      <div class="title">🎯 מטרת השעה</div>
+      להבין למה צריך DHCP, איך הוא עובד בפועל, ומה זה תהליך DORA - הליבה של איך המחשב שלך מקבל IP אוטומטית.
+    </div>
+
+    <h3>2.1 מה זה DHCP?</h3>
+    <p>
+      <b>DHCP - Dynamic Host Configuration Protocol</b> זה פרוטוקול ניהול רשת שמחלק אוטומטית הגדרות רשת
+      (IP, Subnet Mask, Default Gateway, DNS) למכשירים בכל פעם שהם מתחברים לרשת.
+    </p>
+
+    <div class="definition">
+      <span class="term">פורט DHCP</span>
+      <span>השרת מאזין על UDP <b>port 67</b>, הלקוח על UDP <b>port 68</b>. שניהם UDP, לא TCP - כי הפרוטוקול עובד ב-broadcast לפני שיש בכלל IP.</span>
+    </div>
+
+    <h4>למה זה כל-כך חשוב?</h4>
+    <p>תארו לעצמכם ארגון עם 500 מחשבים. בלי DHCP:</p>
+    <ul>
+      <li>חייב אדמין לקבוע ידנית כתובת IP, Subnet, Gateway, DNS לכל אחד.</li>
+      <li>טעויות בקלדה גורמות להתנגשויות IP (שני מחשבים עם אותה כתובת).</li>
+      <li>כל שינוי ברשת (החלפת DNS למשל) - עוברים מכשיר-מכשיר.</li>
+      <li>אורח שמגיע עם נייד? צריך אדמין שיגדיר לו ידנית.</li>
+    </ul>
+    <p>עם DHCP - הכל אוטומטי, מהיר ובלי טעויות.</p>
+
+    <h3>2.2 הגדרה דינמית מול סטטית</h3>
+
+    <div class="compare">
+      <div class="pros">
+        <h4>⚡ Dynamic (DHCP)</h4>
+        <ul>
+          <li>הגדרה אוטומטית בעלייה.</li>
+          <li>אחוז גבוה מאוד של תצורה נכונה.</li>
+          <li>עדכון אוטומטי לכל הלקוחות בשינוי.</li>
+          <li>מבטל מקור נפוץ לתקלות רשת.</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>📌 Static (ידני)</h4>
+        <ul>
+          <li>תצורה מוגדרת ידנית.</li>
+          <li>סיכון לטעויות אנוש.</li>
+          <li>שינויים גורמים לתקלות תקשורת.</li>
+          <li>מאמץ אדמיניסטרטיבי גבוה.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="box warn">
+      <div class="title">📌 מתי בכל זאת משתמשים בסטטי?</div>
+      <ul>
+        <li>שרתים חשובים (DC, DNS, קבצים, מדפסות) - שלא ישתנו IP.</li>
+        <li>נתבים ו-Switches.</li>
+        <li>מכשירי IoT/בקרת תעשייה (מצלמות, בקרים).</li>
+        <li>שרת ה-DHCP עצמו!</li>
+      </ul>
+      פתרון ביניים: <b>DHCP Reservation</b> - שומרים לכתובת MAC ספציפית את אותה כתובת IP תמיד. נלמד את זה בשעה הבאה.
+    </div>
+
+    <h3>2.3 תהליך DORA - הלב של DHCP</h3>
+    <p>
+      <b>DORA = Discover, Offer, Request, Acknowledge</b> - ארבעת השלבים שלקוח עובר כדי לקבל כתובת IP.
+    </p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#6df0c8"/>
+          </marker>
+          <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7aa8ff"/>
+          </marker>
+        </defs>
+        <!-- Client -->
+        <rect x="40" y="20" width="120" height="60" rx="10" fill="#1a224a" stroke="#6df0c8" stroke-width="2"/>
+        <text x="100" y="55" text-anchor="middle" fill="#6df0c8" font-size="15" font-family="Heebo">Client</text>
+        <line x1="100" y1="80" x2="100" y2="300" stroke="#2a3266" stroke-dasharray="4,4"/>
+
+        <!-- Server -->
+        <rect x="540" y="20" width="120" height="60" rx="10" fill="#1a224a" stroke="#7aa8ff" stroke-width="2"/>
+        <text x="600" y="55" text-anchor="middle" fill="#7aa8ff" font-size="15" font-family="Heebo">DHCP Server</text>
+        <line x1="600" y1="80" x2="600" y2="300" stroke="#2a3266" stroke-dasharray="4,4"/>
+
+        <!-- DISCOVER -->
+        <line x1="100" y1="120" x2="595" y2="120" stroke="#6df0c8" stroke-width="2" marker-end="url(#arr2)"/>
+        <text x="350" y="112" text-anchor="middle" fill="#6df0c8" font-size="13" font-family="JetBrains Mono">1. DISCOVER (broadcast)</text>
+        <text x="350" y="135" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">"מי כאן יכול לתת לי IP?"</text>
+
+        <!-- OFFER -->
+        <line x1="600" y1="170" x2="105" y2="170" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr3)"/>
+        <text x="350" y="162" text-anchor="middle" fill="#7aa8ff" font-size="13" font-family="JetBrains Mono">2. OFFER</text>
+        <text x="350" y="185" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">"קח את 10.0.0.5"</text>
+
+        <!-- REQUEST -->
+        <line x1="100" y1="220" x2="595" y2="220" stroke="#6df0c8" stroke-width="2" marker-end="url(#arr2)"/>
+        <text x="350" y="212" text-anchor="middle" fill="#6df0c8" font-size="13" font-family="JetBrains Mono">3. REQUEST (broadcast)</text>
+        <text x="350" y="235" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">"אני מבקש את 10.0.0.5"</text>
+
+        <!-- ACK -->
+        <line x1="600" y1="270" x2="105" y2="270" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr3)"/>
+        <text x="350" y="262" text-anchor="middle" fill="#7aa8ff" font-size="13" font-family="JetBrains Mono">4. ACK</text>
+        <text x="350" y="285" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">"מאושר, השכרה ל-8 ימים"</text>
+      </svg>
+      <div class="caption">תהליך DORA - 4 הודעות בין הלקוח לשרת</div>
+    </div>
+
+    <ol class="steps">
+      <li><strong>D - DHCPDISCOVER (גילוי):</strong>
+        הלקוח עולה לראשונה לרשת בלי IP. הוא שולח חבילת <b>broadcast</b> (לכל הרשת, כתובת יעד <code>255.255.255.255</code>)
+        שאומרת בעצם "מישהו פה DHCP? אני צריך IP". כתובת המקור היא <code>0.0.0.0</code> כי אין לו עדיין כתובת.
+      </li>
+      <li><strong>O - DHCPOFFER (הצעה):</strong>
+        כל שרת DHCP שמקבל את ה-DISCOVER עונה עם הצעה - "אני יכול להציע לך את הכתובת X לתקופה Y". ההצעה מגיעה גם
+        ב-broadcast (כי ללקוח עדיין אין כתובת רגילה).
+      </li>
+      <li><strong>R - DHCPREQUEST (בקשה):</strong>
+        הלקוח בוחר את ההצעה הראשונה שהגיעה (אם יש כמה שרתים). הוא שולח <b>שוב broadcast</b> עם בקשה רשמית
+        עבור הכתובת. למה broadcast? כדי שכל שאר השרתים שהציעו יידעו שהוא בחר אחר ויחזירו את הכתובות לבריכה.
+      </li>
+      <li><strong>A - DHCPACK (אישור):</strong>
+        השרת רושם בבסיס הנתונים שלו שהכתובת תפוסה, ושולח אישור סופי עם כל הפרטים (IP, Subnet Mask, Gateway, DNS, lease time).
+      </li>
+      <li><strong>(שלב 5 - אימות):</strong>
+        הלקוח שולח בקשת <b>ARP</b> כדי לוודא שאף אחד אחר ברשת לא משתמש כבר באותה כתובת. אם אין תגובה - הכל תקין.
+      </li>
+    </ol>
+
+    <div class="box warn">
+      <div class="title">🔐 נקודה חשובה לאבטחה</div>
+      כל ההודעות הראשונות הן <b>broadcast לא מאומת</b>. תוקף ברשת יכול להציע IP לפני השרת האמיתי -
+      התקפת <b>DHCP Spoofing</b>. מגנים על זה ב-Switches עם <b>DHCP Snooping</b>.
+    </div>
+
+    <h3>2.4 DHCP Lease - השכרת הכתובת</h3>
+    <p>
+      כתובת IP <b>לא ניתנת לתמיד</b> - היא <b>מושכרת</b> לזמן מוגדר. ברירת המחדל ב-Windows DHCP היא <b>8 ימים</b>.
+      בסיום ה-lease, הכתובת חוזרת לבריכה ויכולה להינתן ללקוח אחר.
+    </p>
+
+    <h4>תהליך חידוש (Renewal)</h4>
+    <ol class="steps">
+      <li><strong>50% מה-lease:</strong> הלקוח מנסה לחדש מול אותו שרת ששכר ממנו. אם השרת עונה - מקבל lease חדש לזמן מלא.</li>
+      <li><strong>75% מה-lease (T2):</strong> אם לא קיבל תשובה, הלקוח מנסה <b>broadcast</b> לכל שרת DHCP ברשת.</li>
+      <li><strong>100% מה-lease:</strong> אם עדיין אין תשובה - הכתובת מתבטלת. הלקוח מתחיל מההתחלה (DORA חדש), ואם גם זה נכשל - מקבל APIPA.</li>
+    </ol>
+
+    <div class="box tip">
+      <div class="title">⚙️ איך לבחור lease time?</div>
+      <ul>
+        <li><b>רשת יציבה</b> (משרדים, שולחנות עבודה): lease ארוך - 8 ימים ומעלה. פחות תעבורה, פחות עומס.</li>
+        <li><b>רשת דינמית</b> (מלון, אורחים, Wi-Fi פתוח): lease קצר - שעה עד יום. כתובות חוזרות מהר לבריכה.</li>
+        <li><b>כלל אצבע:</b> ככל שיותר מכשירים נכנסים ויוצאים - lease קצר יותר.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOUR 3 -->
+<!-- ============================================ -->
+<section class="hour" id="hour3">
+  <div class="hour-head">
+    <h2>שעה 3 - התקנה והגדרת DHCP Server על Windows Server</h2>
+    <span class="time">⏱ 2:00 - 3:00</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="box tip">
+      <div class="title">🎯 מטרת השעה</div>
+      להתקין שרת DHCP מ-A ל-Z על Windows Server, להגדיר Scope, Exclusions, Reservations ו-Filters.
+      בסוף השעה - כל תלמיד יידע להקים שרת DHCP פונקציונלי.
+    </div>
+
+    <div class="box warn">
+      <div class="title">⚙️ דרישות מקדימות</div>
+      <ul>
+        <li>Windows Server (2019 / 2022 / 2025) מותקן ופועל.</li>
+        <li>כתובת IP <b>סטטית</b> לשרת עצמו (שרת DHCP חייב IP קבוע!).</li>
+        <li>חיבור לדומיין (אם רוצים אוטוריזציה דרך AD - הכי מקובל).</li>
+        <li>הרשאות Domain Admin / Enterprise Admin.</li>
+      </ul>
+    </div>
+
+    <h3>3.1 התקנת התפקיד (Role)</h3>
+
+    <ol class="steps">
+      <li>
+        <strong>פתיחת Server Manager:</strong>
+        לחיצה על תפריט Start ⟵ <code>Server Manager</code>. במסך הראשי לוחצים על
+        <code>Manage</code> בפינה הימנית העליונה ⟵ <code>Add Roles and Features</code>.
+      </li>
+      <li>
+        <strong>Before You Begin:</strong>
+        מסך פתיחה. לוחצים <code>Next</code>. (אפשר לסמן <code>Skip this page by default</code> כדי לדלג בעתיד.)
+      </li>
+      <li>
+        <strong>Installation Type:</strong>
+        בוחרים <code>Role-based or feature-based installation</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Server Selection:</strong>
+        בוחרים את השרת מהרשימה (בדרך כלל יש רק אחד) ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Server Roles:</strong>
+        ✅ מסמנים את התיבה ליד <code>DHCP Server</code>. יקפוץ חלון שמבקש להוסיף features תומכות -
+        לוחצים <code>Add Features</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Features:</strong>
+        משאירים כברירת מחדל ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>DHCP Server:</strong>
+        מסך מידע. <code>Next</code>.
+      </li>
+      <li>
+        <strong>Confirmation:</strong>
+        מסמנים <code>Restart the destination server automatically if required</code> (אופציונלי) ⟵
+        לוחצים <code>Install</code>. ההתקנה לוקחת 2-5 דקות.
+      </li>
+    </ol>
+
+    <h3>3.2 הרשאה מול ה-DC (Authorization)</h3>
+    <p>
+      בסביבת דומיין, שרת DHCP חייב להיות <b>מאושר</b> על ידי הדומיין כדי להקצות כתובות. זה הגנה מובנית של Microsoft מפני שרתי DHCP זדוניים (Rogue DHCP).
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>אחרי ההתקנה</strong> - בדגל הצהוב למעלה ב-Server Manager תופיע הודעה
+        <code>Complete DHCP Configuration</code>. לחיצה עליה.
+      </li>
+      <li>
+        <strong>Description:</strong> מסך מידע ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Authorization:</strong>
+        בוחרים את המשתמש שיבצע את האוטוריזציה (ברירת מחדל - המשתמש המחובר, צריך להיות Enterprise Admin) ⟵
+        <code>Commit</code>.
+      </li>
+      <li>
+        <strong>Summary:</strong>
+        אמורים לראות שני סטטוסים של "Done":
+        <ul>
+          <li><code>Creating security groups: Done</code></li>
+          <li><code>Authorizing DHCP server: Done</code></li>
+        </ul>
+        לוחצים <code>Close</code>.
+      </li>
+    </ol>
+
+    <div class="box danger">
+      <div class="title">🚨 שגיאה נפוצה</div>
+      אם השרת לא מאושר - הוא יותקן, אך לא ישיב לבקשות DHCP. בדיקה: ב-DHCP Manager, אם רואים חץ אדום על השרת ⟵ הוא לא מאושר.
+      פתרון: לחיצה ימנית על השרת ⟵ <code>Authorize</code>.
+    </div>
+
+    <h3>3.3 יצירת Scope - בריכת הכתובות</h3>
+    <p>
+      <b>Scope</b> זה הגדרה של טווח כתובות שהשרת יכול להקצות. בלי Scope - השרת קיים אבל לא מחלק כלום.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <strong>פתיחת DHCP Manager:</strong>
+        ב-Server Manager ⟵ <code>Tools</code> ⟵ <code>DHCP</code>.
+      </li>
+      <li>
+        <strong>ניווט ל-IPv4:</strong>
+        בחלונית הימנית, פותחים את העץ: שם השרת ⟵ <code>IPv4</code>.
+      </li>
+      <li>
+        <strong>יצירת Scope חדש:</strong>
+        לחיצה ימנית על <code>IPv4</code> ⟵ <code>New Scope...</code>.
+      </li>
+      <li>
+        <strong>Name:</strong>
+        שם תיאורי, למשל <code>Office_LAN_192.168.1.0</code>. תיאור אופציונלי. ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>IP Address Range:</strong>
+        ממלאים את הטווח:
+        <ul>
+          <li><b>Start IP address:</b> <code>192.168.1.10</code></li>
+          <li><b>End IP address:</b> <code>192.168.1.200</code></li>
+          <li><b>Length:</b> <code>24</code></li>
+          <li><b>Subnet mask:</b> ימולא אוטומטית - <code>255.255.255.0</code></li>
+        </ul>
+        ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Add Exclusions and Delay:</strong>
+        כתובות בתוך הטווח שלא יוקצו (למשל מדפסות סטטיות). אפשר לדלג ולחזור אחר כך. ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Lease Duration:</strong>
+        ברירת המחדל 8 ימים. אפשר לשנות לפי הצורך. ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Configure DHCP Options:</strong>
+        בוחרים <code>Yes, I want to configure these options now</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Router (Default Gateway):</strong>
+        ממלאים את כתובת הנתב (<code>192.168.1.1</code>) ⟵ <code>Add</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Domain Name and DNS Servers:</strong>
+        Parent Domain: <code>cyber.local</code>. בשורת ה-IP address של DNS - מוסיפים את כתובת ה-DNS של הדומיין (לרוב ה-DC עצמו). <code>Add</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>WINS Servers:</strong>
+        בדרך כלל מדלגים (WINS פרוטוקול ישן) ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Activate Scope:</strong>
+        בוחרים <code>Yes, I want to activate this scope now</code> ⟵ <code>Next</code> ⟵ <code>Finish</code>.
+      </li>
+    </ol>
+
+    <h3>3.4 Exclusions - הוצאת כתובות מהבריכה</h3>
+    <p>
+      אם יש לך כתובות בתוך הטווח שכבר תפוסות סטטית (למשל מדפסות, מתגים), צריך להוציא אותן מהבריכה כדי שה-DHCP לא יקצה אותן בטעות.
+    </p>
+    <ol class="steps">
+      <li>ב-DHCP Manager ⟵ פותחים את ה-Scope ⟵ לחיצה ימנית על <code>Address Pool</code> ⟵ <code>New Exclusion Range</code>.</li>
+      <li>ממלאים Start IP ו-End IP (לכתובת בודדה ממלאים רק Start) ⟵ <code>Add</code> ⟵ <code>Close</code>.</li>
+    </ol>
+
+    <h3>3.5 Reservations - הקצאה קבועה ב-MAC</h3>
+    <p>
+      <b>Reservation</b> נותנת לכתובת MAC ספציפית תמיד את אותה כתובת IP, גם שהיא דרך DHCP. שילוב מנצח: יציבות של סטטי + ניהול מרכזי של DHCP.
+    </p>
+
+    <div class="box tip">
+      <div class="title">📌 דוגמאות לשימוש ב-Reservation</div>
+      <ul>
+        <li>מדפסת רשת - שתמיד באותה כתובת לקיצורי דרך.</li>
+        <li>שרת קבצים פנימי.</li>
+        <li>מצלמות אבטחה - שכתובות יהיו צפויות.</li>
+        <li>שולחן עבודה של מנהל / מפתח שדורש פורט פתוח.</li>
+      </ul>
+    </div>
+
+    <ol class="steps">
+      <li>בתוך ה-Scope ⟵ לחיצה ימנית על <code>Reservations</code> ⟵ <code>New Reservation</code>.</li>
+      <li>ממלאים:
+        <ul>
+          <li><b>Reservation name:</b> שם תיאורי, למשל <code>Printer-HR</code>.</li>
+          <li><b>IP address:</b> הכתובת הקבועה (חייבת להיות בתוך ה-Scope).</li>
+          <li><b>MAC address:</b> כתובת ה-MAC של המכשיר (אפשר ללא מקפים, למשל <code>AABBCC112233</code>).</li>
+          <li><b>Description:</b> תיאור אופציונלי.</li>
+          <li><b>Supported types:</b> <code>Both</code> (DHCP + BOOTP) - בטוח לבחור.</li>
+        </ul>
+      </li>
+      <li><code>Add</code> ⟵ <code>Close</code>.</li>
+    </ol>
+
+    <p><b>טיפ:</b> כדי למצוא MAC של מכשיר Windows - <code>ipconfig /all</code>, השדה <code>Physical Address</code>.</p>
+
+    <h3>3.6 DHCP Filters - שליטה גרעינית במי מקבל</h3>
+    <p>
+      <b>Filter</b> מגביל את ההקצאה לפי MAC. שני סוגים:
+    </p>
+    <ul>
+      <li><b>Allow filter (Whitelist):</b> כשמופעל - <b>רק</b> מכשירים ברשימה מקבלים IP. הכי מחמיר.</li>
+      <li><b>Deny filter (Blacklist):</b> כשמופעל - מכשירים ברשימה <b>לא</b> מקבלים. כל השאר מקבלים.</li>
+    </ul>
+
+    <ol class="steps">
+      <li>ב-DHCP Manager ⟵ פותחים <code>IPv4</code> ⟵ <code>Filters</code> ⟵ <code>Allow</code> או <code>Deny</code>.</li>
+      <li>לחיצה ימנית ⟵ <code>New Filter</code> ⟵ ממלאים MAC + תיאור ⟵ <code>Add</code>.</li>
+      <li>כדי להפעיל: לחיצה ימנית על <code>Allow</code> או <code>Deny</code> ⟵ <code>Enable</code>.</li>
+    </ol>
+
+    <div class="box danger">
+      <div class="title">⚠️ זהירות עם Allow Filter</div>
+      ברגע שמפעילים Allow ולא הזנת אף MAC - <b>אף אחד</b> לא יקבל IP יותר! תמיד למלא MACs קודם, להפעיל אחר כך.
+    </div>
+
+    <h3>3.7 פקודות CMD לבדיקות בצד הלקוח</h3>
+
+    <pre><code><span class="cmd-prompt">C:\&gt;</span> ipconfig
+<span class="cmd-comment"># הצגת תצורת הרשת הנוכחית (IP, Mask, Gateway)</span>
+
+<span class="cmd-prompt">C:\&gt;</span> ipconfig /all
+<span class="cmd-comment"># תצוגה מלאה - כולל MAC, DNS, lease times, שרת DHCP</span>
+
+<span class="cmd-prompt">C:\&gt;</span> ipconfig /release
+<span class="cmd-comment"># שחרור הכתובת הנוכחית - חוזרת לבריכת DHCP</span>
+
+<span class="cmd-prompt">C:\&gt;</span> ipconfig /renew
+<span class="cmd-comment"># בקשת כתובת חדשה משרת DHCP</span></code></pre>
+
+    <div class="box tip">
+      <div class="title">💡 רצף לפתרון בעיות נפוץ</div>
+      <pre><code>ipconfig /release
+ipconfig /renew
+ipconfig /flushdns
+ipconfig /registerdns</code></pre>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOUR 4 -->
+<!-- ============================================ -->
+<section class="hour" id="hour4">
+  <div class="hour-head">
+    <h2>שעה 4 - הכרת DNS, אזורים ו-Records</h2>
+    <span class="time">⏱ 3:00 - 4:00</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="box tip">
+      <div class="title">🎯 מטרת השעה</div>
+      להבין מה זה DNS, איך הוא ממיר שמות לכתובות, מה זו ההיררכיה של הדומיינים, מה זה Forward/Reverse Lookup ואיזה סוגי Records קיימים.
+    </div>
+
+    <h3>4.1 מה זה DNS?</h3>
+    <p>
+      <b>DNS - Domain Name System</b> הוא פרוטוקול שממיר <b>שמות דומיין</b> (כמו <code>www.google.com</code>) ל<b>כתובות IP</b>
+      (כמו <code>142.250.190.78</code>). זה ה"ספר טלפונים" של האינטרנט.
+    </p>
+
+    <div class="definition">
+      <span class="term">פורט DNS</span>
+      <span>UDP <b>port 53</b> (לשאילתות רגילות), TCP <b>port 53</b> (לתשובות גדולות, zone transfer, DNS-over-TLS).</span>
+    </div>
+
+    <div class="box tip">
+      <div class="title">📌 למה DNS קריטי בארגון?</div>
+      ב-Active Directory, <b>בלי DNS פעיל - אין דומיין</b>. הלקוחות מאתרים את ה-DC דרך DNS records ספציפיים (SRV records).
+      מחשב שלא מגיע ל-DNS - לא יכול להתחבר לדומיין, לא יכול לעדכן GPO, לא יכול לבצע אימות Kerberos.
+    </div>
+
+    <h3>4.2 יתרונות וחסרונות</h3>
+
+    <div class="compare">
+      <div class="pros">
+        <h4>✅ יתרונות</h4>
+        <ul>
+          <li>גלישה נוחה - לא צריך לזכור IP.</li>
+          <li>שינוי IP של שרת בלי לפגוע במשתמשים.</li>
+          <li>Load Balancing - אותו שם, כמה כתובות.</li>
+          <li>DNS מוצפן (DoH/DoT) - שיפור פרטיות.</li>
+          <li>מסייע במניעת התקפות בהגדרה נכונה.</li>
+        </ul>
+      </div>
+      <div class="cons">
+        <h4>⚠️ חסרונות / סיכונים</h4>
+        <ul>
+          <li>נקודת כשל - DNS למטה = רשת למטה.</li>
+          <li>פגיע ל-DDoS.</li>
+          <li>חשוף ל-DNS Poisoning / Spoofing.</li>
+          <li>שאילתות לא מוצפנות נחשפות בדרך.</li>
+          <li>ICANN שולטת בקצוות העליון של המערכת.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>4.3 מבנה FQDN - שם דומיין מלא</h3>
+    <p>
+      <b>FQDN = Fully Qualified Domain Name</b>. שם מלא, מקצה לקצה.
+    </p>
+
+    <div class="diagram">
+      <svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+        <text x="350" y="60" text-anchor="middle" fill="#fff" font-size="32" font-family="JetBrains Mono" font-weight="700">www.hackeru.com.</text>
+
+        <line x1="180" y1="80" x2="180" y2="120" stroke="#7aa8ff" stroke-width="2"/>
+        <line x1="320" y1="80" x2="320" y2="120" stroke="#6df0c8" stroke-width="2"/>
+        <line x1="450" y1="80" x2="450" y2="120" stroke="#ffb84d" stroke-width="2"/>
+        <line x1="560" y1="80" x2="560" y2="120" stroke="#ff6b8a" stroke-width="2"/>
+
+        <text x="180" y="140" text-anchor="middle" fill="#7aa8ff" font-size="14" font-family="Heebo">Subdomain</text>
+        <text x="180" y="160" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">תת-תחום</text>
+
+        <text x="320" y="140" text-anchor="middle" fill="#6df0c8" font-size="14" font-family="Heebo">SLD</text>
+        <text x="320" y="160" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">שם הארגון</text>
+
+        <text x="450" y="140" text-anchor="middle" fill="#ffb84d" font-size="14" font-family="Heebo">TLD</text>
+        <text x="450" y="160" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">סיומת עליונה</text>
+
+        <text x="560" y="140" text-anchor="middle" fill="#ff6b8a" font-size="14" font-family="Heebo">Root</text>
+        <text x="560" y="160" text-anchor="middle" fill="#aab3d8" font-size="11" font-family="Heebo">השורש (נקודה)</text>
+      </svg>
+      <div class="caption">חלקי ה-FQDN - נקראים מימין לשמאל בהיררכיית DNS</div>
+    </div>
+
+    <h4>שלוש רמות הדומיין</h4>
+
+    <div class="definition">
+      <span class="term">Root Domain</span>
+      <span>השורש - הנקודה הבודדה בסוף. יש בעולם <b>13 שרתי root</b> (A עד M) שמובילים את כל ה-DNS. בכל שאילתה מלאה הנקודה מובלעת בסוף.</span>
+    </div>
+
+    <div class="definition">
+      <span class="term">TLD - Top Level Domain</span>
+      <span>הסיומת: <code>.com</code>, <code>.org</code>, <code>.gov</code>, <code>.il</code>, <code>.co.il</code>. שני סוגים: <b>gTLD</b> (גנרי) ו-<b>ccTLD</b> (לפי מדינה).</span>
+    </div>
+
+    <div class="definition">
+      <span class="term">SLD - Second Level</span>
+      <span>החלק שהארגון רוכש: <code>hackeru</code>, <code>google</code>, <code>microsoft</code>. תחתיו אפשר ליצור עוד תת-דומיינים: <code>www</code>, <code>mail</code>, <code>shop</code>.</span>
+    </div>
+
+    <h3>4.4 איך נראית שאילתת DNS אמיתית?</h3>
+
+    <p>כאשר אתה מקליד <code>www.hackeru.com</code> בדפדפן, מאחורי הקלעים קורה תהליך מסובך:</p>
+
+    <ol class="steps">
+      <li>
+        <strong>בדיקת cache מקומי:</strong>
+        המחשב בודק קודם את ה-cache שלו (<code>ipconfig /displaydns</code>) ואת קובץ ה-hosts. אם יש - חוזר מיד.
+      </li>
+      <li>
+        <strong>שאילתה ל-DNS המקומי:</strong>
+        אם אין ב-cache, נשלחת שאילתה ל-DNS המקומי (בדרך כלל הראוטר או DC). זה ידוע כ-<b>Recursive Query</b> - "בבקשה מצא לי את התשובה".
+      </li>
+      <li>
+        <strong>שאילתה ל-Root:</strong>
+        אם ה-DNS המקומי לא מכיר - הוא פונה לאחד מ-13 שרתי הroot ושואל "מי אחראי על <code>.com</code>?". מקבל הפניה לשרתי TLD.
+      </li>
+      <li>
+        <strong>שאילתה ל-TLD:</strong>
+        ה-DNS המקומי שואל את שרת <code>.com</code> "מי אחראי על <code>hackeru.com</code>?". מקבל הפניה ל-DNS האוטוריטטיבי של hackeru.
+      </li>
+      <li>
+        <strong>שאילתה ל-Authoritative:</strong>
+        שאלה אחרונה - "מה הכתובת של <code>www.hackeru.com</code>?". התשובה מגיעה: <code>199.244.49.102</code>.
+      </li>
+      <li>
+        <strong>חזרה ללקוח + caching:</strong>
+        ה-DNS המקומי שומר את התשובה ב-cache (לפי TTL) ומחזיר ללקוח. בפעם הבאה - יענה מיד מה-cache.
+      </li>
+    </ol>
+
+    <div class="diagram">
+      <svg viewBox="0 0 700 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 z" fill="#7aa8ff"/>
+          </marker>
+        </defs>
+        <rect x="30" y="120" width="100" height="50" rx="8" fill="#1a224a" stroke="#6df0c8"/>
+        <text x="80" y="150" text-anchor="middle" fill="#6df0c8" font-size="13" font-family="Heebo">לקוח</text>
+
+        <rect x="180" y="120" width="120" height="50" rx="8" fill="#1a224a" stroke="#7aa8ff"/>
+        <text x="240" y="143" text-anchor="middle" fill="#7aa8ff" font-size="13" font-family="Heebo">DNS מקומי</text>
+        <text x="240" y="160" text-anchor="middle" fill="#aab3d8" font-size="10" font-family="Heebo">Recursive</text>
+
+        <rect x="350" y="20" width="120" height="50" rx="8" fill="#1a224a" stroke="#ffb84d"/>
+        <text x="410" y="50" text-anchor="middle" fill="#ffb84d" font-size="13" font-family="Heebo">Root (.)</text>
+
+        <rect x="350" y="120" width="120" height="50" rx="8" fill="#1a224a" stroke="#ffb84d"/>
+        <text x="410" y="150" text-anchor="middle" fill="#ffb84d" font-size="13" font-family="Heebo">TLD (.com)</text>
+
+        <rect x="350" y="220" width="120" height="50" rx="8" fill="#1a224a" stroke="#ffb84d"/>
+        <text x="410" y="245" text-anchor="middle" fill="#ffb84d" font-size="13" font-family="Heebo">Authoritative</text>
+        <text x="410" y="260" text-anchor="middle" fill="#aab3d8" font-size="10" font-family="Heebo">hackeru.com</text>
+
+        <rect x="520" y="120" width="150" height="50" rx="8" fill="#1a224a" stroke="#6df0c8"/>
+        <text x="595" y="143" text-anchor="middle" fill="#6df0c8" font-size="12" font-family="Heebo">199.244.49.102</text>
+        <text x="595" y="160" text-anchor="middle" fill="#aab3d8" font-size="10" font-family="Heebo">תשובה סופית</text>
+
+        <line x1="130" y1="145" x2="175" y2="145" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr4)"/>
+        <line x1="300" y1="135" x2="345" y2="45" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr4)"/>
+        <line x1="300" y1="145" x2="345" y2="145" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr4)"/>
+        <line x1="300" y1="160" x2="345" y2="245" stroke="#7aa8ff" stroke-width="2" marker-end="url(#arr4)"/>
+        <line x1="300" y1="145" x2="515" y2="145" stroke="#6df0c8" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arr4)"/>
+      </svg>
+      <div class="caption">תהליך resolution היררכי - מהשורש עד התשובה</div>
+    </div>
+
+    <h3>4.5 Forward Lookup ו-Reverse Lookup</h3>
+
+    <div class="compare">
+      <div class="pros">
+        <h4>➡️ Forward Lookup</h4>
+        <p><b>שם ⟵ IP</b></p>
+        <p>"מה הכתובת של <code>www.hackeru.com</code>?" ⟵ <code>199.244.49.102</code>.</p>
+        <p>זה השימוש הנפוץ - 99% מהשאילתות. גלישה, שליחת מייל, חיבור לשרת.</p>
+      </div>
+      <div class="cons">
+        <h4>⬅️ Reverse Lookup</h4>
+        <p><b>IP ⟵ שם</b></p>
+        <p>"איזה שם משויך ל-<code>10.10.10.10</code>?" ⟵ <code>DC-01.cy.local</code>.</p>
+        <p>שימושי ב-logs, ניטור, חוקרי אבטחה, מערכות אנטי-spam (בודקות שמייל מגיע משרת תקין).</p>
+      </div>
+    </div>
+
+    <h3>4.6 סוגי Zones</h3>
+
+    <div class="records">
+      <div class="record">
+        <span class="rtype">Primary Zone</span>
+        <p><b>אזור ראשי</b> - העותק המקורי הניתן לכתיבה. כל השינויים מתבצעים פה. ניתן לעדכן אוטומטית או ידנית.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">Secondary Zone</span>
+        <p><b>אזור משני</b> - עותק לקריאה בלבד. מעודכן דרך <b>Zone Transfer</b> מה-Primary. מטרה: חיזוק עמידות וביצועים.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">Stub Zone</span>
+        <p><b>אזור מקוצר</b> - מכיל רק את ה-NS records לזיהוי איזה DNS אחראי על האזור. שימוש: הפניות מהירות בלי לשמור את כל הנתונים.</p>
+      </div>
+    </div>
+
+    <h3>4.7 DNS Records - סוגי הרישומים</h3>
+
+    <div class="records">
+      <div class="record">
+        <span class="rtype">SOA</span>
+        <p><b>Start of Authority</b> - הרשום הראשון בכל zone. מי האוטוריטטי, מספר סידורי, זמני רענון, TTL מוגדר.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">A</span>
+        <p><b>Address</b> - מיפוי שם ⟵ <b>IPv4</b>. <code>server.cyber.local ⟵ 10.0.0.5</code>. הנפוץ ביותר.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">AAAA</span>
+        <p>נקרא "Quad-A". מיפוי שם ⟵ <b>IPv6</b>. אותו דבר כמו A, רק לכתובות 128-bit.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">CNAME</span>
+        <p><b>Canonical Name</b> - כינוי. <code>mail.cyber.local ⟵ webmail.cyber.local</code>. מצביע על שם אחר, לא על IP.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">MX</span>
+        <p><b>Mail Exchanger</b> - שרת המייל של הדומיין. כשמישהו שולח לך מייל - השולח שואל את DNS שלך "MX?".</p>
+      </div>
+      <div class="record">
+        <span class="rtype">NS</span>
+        <p><b>Name Server</b> - איזה DNS אוטוריטטיבי על הדומיין. בכל zone יש לפחות אחד.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">PTR</span>
+        <p><b>Pointer</b> - מיפוי IP ⟵ שם (היפוך של A/AAAA). נמצא ב-Reverse Lookup Zone.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">SRV</span>
+        <p><b>Service</b> - מאתר שירותים בדומיין. ה-DC משתמש בזה: <code>_ldap._tcp.cyber.local</code> מצביע על שרתי הדומיין.</p>
+      </div>
+      <div class="record">
+        <span class="rtype">TXT</span>
+        <p>טקסט חופשי. בשימוש למשל ב-SPF, DKIM, אימותי בעלות, וגם רישומי אבטחה.</p>
+      </div>
+    </div>
+
+    <h3>4.8 Forwarders - תקשורת ל-DNS חיצוני</h3>
+
+    <p>בארגון יש כמה שרתי DNS. במקום שכל אחד יבצע resolution לעולם החיצון - מגדירים <b>Forwarder</b>.</p>
+
+    <div class="definition">
+      <span class="term">Forwarder</span>
+      <span>שרת DNS שמטפל בכל הבקשות שיוצאות מהארגון. אם DNS פנימי לא יודע את התשובה - הוא שולח ל-forwarder. רק ה-forwarder ניגש לעולם. שיפור אבטחה ויעילות.</span>
+    </div>
+
+    <div class="definition">
+      <span class="term">Conditional Forwarder</span>
+      <span>הפניה <b>תלוית-תנאי</b>. למשל: כל שאילתה על <code>partner.com</code> תופנה ל-DNS של השותף, ולא דרך ה-forwarder הרגיל. שימושי בחיבורי VPN בין ארגונים.</span>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- HOUR 5 -->
+<!-- ============================================ -->
+<section class="hour" id="hour5">
+  <div class="hour-head">
+    <h2>שעה 5 - התקנת DNS, Reverse Zone ופקודות CMD</h2>
+    <span class="time">⏱ 4:00 - 5:00</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="box tip">
+      <div class="title">🎯 מטרת השעה</div>
+      להתקין שרת DNS, ליצור Zones (Forward + Reverse), להוסיף Records, ולשלוט בכלי האבחון בקליטה.
+    </div>
+
+    <h3>5.1 התקנת תפקיד DNS</h3>
+
+    <div class="box tip">
+      <div class="title">💡 חשוב לדעת</div>
+      בהתקנת <b>Active Directory Domain Services</b> (AD DS) - תפקיד ה-DNS מותקן <b>אוטומטית</b>!
+      אם השרת שלך כבר DC - דלגו לסעיף הבא.
+    </div>
+
+    <ol class="steps">
+      <li><code>Server Manager</code> ⟵ <code>Manage</code> ⟵ <code>Add Roles and Features</code>.</li>
+      <li><code>Next</code> ⟵ <code>Role-based</code> ⟵ <code>Next</code> ⟵ בחירת השרת ⟵ <code>Next</code>.</li>
+      <li>✅ סימון <code>DNS Server</code> ⟵ הוספת features תומכות ⟵ <code>Next</code> ⟵ <code>Next</code>.</li>
+      <li><code>Install</code> ⟵ ההתקנה לוקחת 1-3 דקות ⟵ <code>Close</code>.</li>
+    </ol>
+
+    <h3>5.2 יצירת Forward Lookup Zone</h3>
+
+    <ol class="steps">
+      <li>
+        <strong>פתיחת DNS Manager:</strong>
+        <code>Server Manager</code> ⟵ <code>Tools</code> ⟵ <code>DNS</code>.
+      </li>
+      <li>
+        <strong>הרחבת השרת:</strong>
+        בעץ הימני ⟵ לחיצה על שם השרת ⟵ <code>Forward Lookup Zones</code>.
+      </li>
+      <li>
+        <strong>New Zone Wizard:</strong>
+        לחיצה ימנית על <code>Forward Lookup Zones</code> ⟵ <code>New Zone...</code> ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Zone Type:</strong>
+        ✅ <code>Primary zone</code>. אם השרת הוא DC - מסמנים גם <code>Store the zone in Active Directory</code>. ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>AD Zone Replication:</strong>
+        בוחרים את ההיקף של ה-replication (ברירת מחדל - לכל ה-DCs בדומיין). ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Zone Name:</strong>
+        שם האזור - למשל <code>cyber.local</code>. ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Dynamic Update:</strong>
+        בסביבת AD - <code>Allow only secure dynamic updates</code> (מומלץ). ⟵ <code>Next</code>.
+      </li>
+      <li>
+        <strong>Finish:</strong>
+        סקירה ⟵ <code>Finish</code>.
+      </li>
+    </ol>
+
+    <h3>5.3 הוספת Host Record (A/AAAA)</h3>
+
+    <ol class="steps">
+      <li>ב-DNS Manager ⟵ פותחים את ה-Zone שיצרת.</li>
+      <li>לחיצה ימנית על האזור ⟵ <code>New Host (A or AAAA)...</code>.</li>
+      <li>ממלאים:
+        <ul>
+          <li><b>Name:</b> שם המארח (למשל <code>fileserver</code>). ה-FQDN יורכב אוטומטית: <code>fileserver.cyber.local</code>.</li>
+          <li><b>IP address:</b> הכתובת של המארח.</li>
+          <li>✅ <code>Create associated pointer (PTR) record</code> - יצירה אוטומטית של PTR ב-Reverse Zone.
+            <span class="badge" style="margin-inline-start:6px">חשוב: דורש שכבר יש Reverse Zone!</span>
+          </li>
+        </ul>
+      </li>
+      <li><code>Add Host</code> ⟵ הודעה על הצלחה ⟵ <code>Done</code>.</li>
+    </ol>
+
+    <h3>5.4 הוספת רישומים נוספים</h3>
+
+    <h4>CNAME (Alias)</h4>
+    <ol class="steps">
+      <li>לחיצה ימנית על האזור ⟵ <code>New Alias (CNAME)...</code>.</li>
+      <li>Alias name: <code>www</code>, FQDN של היעד: <code>fileserver.cyber.local</code>. ⟵ <code>OK</code>.</li>
+    </ol>
+
+    <h4>MX (Mail Exchanger)</h4>
+    <ol class="steps">
+      <li>לחיצה ימנית ⟵ <code>New Mail Exchanger (MX)...</code>.</li>
+      <li>Host or child domain: שאר ריק להפניית הדומיין הראשי. FQDN of mail server: <code>mail.cyber.local</code>. Priority: <code>10</code>. ⟵ <code>OK</code>.</li>
+    </ol>
+
+    <h3>5.5 יצירת Reverse Lookup Zone</h3>
+
+    <div class="box warn">
+      <div class="title">⚠️ לא נוצר אוטומטית!</div>
+      בניגוד ל-Forward Zone - <b>Reverse Zone לא נוצר עם התקנת AD DS</b>. חייבים ליצור ידנית.
+    </div>
+
+    <ol class="steps">
+      <li>ב-DNS Manager ⟵ לחיצה ימנית על <code>Reverse Lookup Zones</code> ⟵ <code>New Zone...</code>.</li>
+      <li>סוג: <code>Primary zone</code> ⟵ <code>Next</code>.</li>
+      <li>IPv4 או IPv6 ⟵ בוחרים <code>IPv4</code> ⟵ <code>Next</code>.</li>
+      <li>
+        <strong>Network ID:</strong>
+        מקלידים את שלושת המספרים הראשונים של הרשת. למשל לרשת <code>10.0.0.0/24</code> ⟵ <code>10.0.0</code>.
+        שם האזור יווצר אוטומטית: <code>0.0.10.in-addr.arpa</code>.
+      </li>
+      <li>בחירת מצב Dynamic Update ⟵ <code>Next</code> ⟵ <code>Finish</code>.</li>
+    </ol>
+
+    <div class="box tip">
+      <div class="title">📌 למה השם הפוך?</div>
+      בכתובת <code>10.0.0.5</code>, ה-PTR נשמר תחת <code>5.0.0.10.in-addr.arpa</code>. המבנה ההפוך זה החלק שמאפשר ל-DNS ההיררכי לעבוד גם כיוונית הפוכה.
+    </div>
+
+    <h4>הוספת PTR Record ידני</h4>
+    <ol class="steps">
+      <li>פותחים את ה-Reverse Zone ⟵ לחיצה ימנית ⟵ <code>New Pointer (PTR)...</code>.</li>
+      <li>Host IP Address: <code>10.0.0.5</code>. Host name: <code>fileserver.cyber.local</code>. ⟵ <code>OK</code>.</li>
+    </ol>
+
+    <h3>5.6 פקודות אבחון בלקוח ושרת</h3>
+
+    <h4>nslookup - שאילתת DNS ידנית</h4>
+    <pre><code><span class="cmd-prompt">C:\&gt;</span> nslookup hackeru.com
+<span class="cmd-out">Server:  DC-01.cyber.local
+Address: 10.0.0.1
+
+Non-authoritative answer:
+Name:    hackeru.com
+Address: 199.244.49.102</span>
+
+<span class="cmd-prompt">C:\&gt;</span> nslookup -type=MX cyber.local
+<span class="cmd-comment"># שאילתה לסוג רישום ספציפי - MX, A, NS, SOA, TXT וכו'</span>
+
+<span class="cmd-prompt">C:\&gt;</span> nslookup 10.0.0.5
+<span class="cmd-comment"># Reverse - מוצא את ה-FQDN לפי IP (דורש PTR record)</span>
+
+<span class="cmd-prompt">C:\&gt;</span> nslookup
+<span class="cmd-out">&gt; server 8.8.8.8
+&gt; hackeru.com</span>
+<span class="cmd-comment"># מצב interactive - שאילתות נגד שרת DNS אחר (גוגל במקרה הזה)</span></code></pre>
+
+    <h4>ipconfig - cache DNS בלקוח</h4>
+    <pre><code><span class="cmd-prompt">C:\&gt;</span> ipconfig /displaydns
+<span class="cmd-comment"># הצגת cache DNS המקומי - כל מה שנשמר אצלך</span>
+
+<span class="cmd-prompt">C:\&gt;</span> ipconfig /flushdns
+<span class="cmd-out">Windows IP Configuration
+Successfully flushed the DNS Resolver Cache.</span>
+<span class="cmd-comment"># ניקוי cache - חיוני אחרי שינוי DNS records</span>
+
+<span class="cmd-prompt">C:\&gt;</span> ipconfig /registerdns
+<span class="cmd-comment"># רישום ידני של רישומי A ו-PTR של המחשב הזה ב-DNS</span></code></pre>
+
+    <h4>PowerShell - הדור החדש</h4>
+    <pre><code><span class="cmd-prompt">PS&gt;</span> Resolve-DnsName hackeru.com
+<span class="cmd-prompt">PS&gt;</span> Resolve-DnsName hackeru.com -Type MX
+<span class="cmd-prompt">PS&gt;</span> Resolve-DnsName -Name hackeru.com -Server 8.8.8.8
+<span class="cmd-prompt">PS&gt;</span> Clear-DnsClientCache
+<span class="cmd-prompt">PS&gt;</span> Get-DnsClientCache
+<span class="cmd-prompt">PS&gt;</span> Register-DnsClient</code></pre>
+
+    <h3>5.7 בעיות נפוצות ופתרונן</h3>
+
+    <table>
+      <thead><tr><th>תסמין</th><th>סיבה אפשרית</th><th>פתרון</th></tr></thead>
+      <tbody>
+        <tr><td>nslookup מחזיר "unknown" ל-IP</td><td>אין PTR record / אין Reverse Zone</td><td>יצירת Reverse Zone + הוספת PTR</td></tr>
+        <tr><td>"DNS request timed out"</td><td>DNS לא נגיש</td><td>בדיקת חיבור רשת, IP של DNS, חומת אש (פורט 53)</td></tr>
+        <tr><td>הלקוח רואה IP ישן של שרת</td><td>cache לא התעדכן</td><td><code>ipconfig /flushdns</code></td></tr>
+        <tr><td>לקוח לא מצליח להתחבר לדומיין</td><td>DNS מצביע לשרת לא נכון</td><td>שינוי DNS בכרטיס הרשת ל-IP של DC</td></tr>
+        <tr><td>"DNS poisoning suspected"</td><td>cache מורעל / MITM</td><td>flush cache, בדיקה ב-DNS חיצוני, הגדרת DNSSEC</td></tr>
+      </tbody>
+    </table>
+
+    <h3>5.8 תרגיל סיכום מעבדה</h3>
+    <div class="box tip">
+      <div class="title">🧪 משימה לתלמידים (30 דק' אחרונות)</div>
+      <ol>
+        <li>על ה-DC: יצירת Forward Zone <code>training.lab</code>.</li>
+        <li>הוספת Host Record <code>web</code> ⟵ <code>10.0.0.50</code>. סימון יצירת PTR אוטומטית - מה קורה? למה?</li>
+        <li>יצירת Reverse Zone לרשת <code>10.0.0.0/24</code>.</li>
+        <li>חוזרים על הוספת Host - הפעם ה-PTR נוצר.</li>
+        <li>הוספת CNAME: <code>www.training.lab</code> ⟵ <code>web.training.lab</code>.</li>
+        <li>מהלקוח: <code>nslookup www.training.lab</code>, <code>nslookup 10.0.0.50</code>.</li>
+        <li>בדיקה ב-<code>ipconfig /displaydns</code>.</li>
+      </ol>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============================================ -->
+<!-- CHEAT SHEET -->
+<!-- ============================================ -->
+<section class="hour" id="cheat">
+  <div class="hour-head">
+    <h2>🧠 דף סיכום וחזרה</h2>
+    <span class="time">📌 חוזרים על העיקר</span>
+  </div>
+  <div class="hour-body">
+
+    <div class="cheat">
+      <h3>🔑 פורטים</h3>
+      <div class="cheat-grid">
+        <div class="cell"><b>DHCP Server</b><br>UDP 67</div>
+        <div class="cell"><b>DHCP Client</b><br>UDP 68</div>
+        <div class="cell"><b>DNS</b><br>UDP/TCP 53</div>
+        <div class="cell"><b>DNS over TLS</b><br>TCP 853</div>
+      </div>
+    </div>
+
+    <div class="cheat">
+      <h3>🔄 תהליך DORA</h3>
+      <div class="cheat-grid">
+        <div class="cell"><b>D</b>iscover<br>"מי DHCP?" (broadcast)</div>
+        <div class="cell"><b>O</b>ffer<br>"קח IP זה"</div>
+        <div class="cell"><b>R</b>equest<br>"אני רוצה את IP זה"</div>
+        <div class="cell"><b>A</b>ck<br>"מאושר ל-X זמן"</div>
+      </div>
+    </div>
+
+    <div class="cheat">
+      <h3>🌐 טווחי IP פרטיים (RFC 1918)</h3>
+      <div class="cheat-grid">
+        <div class="cell"><b>Class A</b><br><code>10.0.0.0/8</code></div>
+        <div class="cell"><b>Class B</b><br><code>172.16.0.0/12</code></div>
+        <div class="cell"><b>Class C</b><br><code>192.168.0.0/16</code></div>
+        <div class="cell"><b>APIPA</b><br><code>169.254.0.0/16</code></div>
+      </div>
+    </div>
+
+    <div class="cheat">
+      <h3>📑 DNS Records קריטיים</h3>
+      <div class="cheat-grid">
+        <div class="cell"><b>A</b><br>שם ⟵ IPv4</div>
+        <div class="cell"><b>AAAA</b><br>שם ⟵ IPv6</div>
+        <div class="cell"><b>CNAME</b><br>כינוי ⟵ שם אחר</div>
+        <div class="cell"><b>MX</b><br>שרת מייל</div>
+        <div class="cell"><b>NS</b><br>Name Server</div>
+        <div class="cell"><b>PTR</b><br>IP ⟵ שם (reverse)</div>
+        <div class="cell"><b>SOA</b><br>אוטוריטה של zone</div>
+        <div class="cell"><b>SRV</b><br>איתור שירותים (AD)</div>
+        <div class="cell"><b>TXT</b><br>טקסט (SPF/DKIM)</div>
+      </div>
+    </div>
+
+    <div class="cheat">
+      <h3>💻 פקודות חיוניות</h3>
+      <pre><code>ipconfig                  <span class="cmd-comment"># תצורת רשת</span>
+ipconfig /all             <span class="cmd-comment"># תצורה מלאה כולל DNS, MAC</span>
+ipconfig /release         <span class="cmd-comment"># שחרור IP</span>
+ipconfig /renew           <span class="cmd-comment"># חידוש IP מ-DHCP</span>
+ipconfig /displaydns      <span class="cmd-comment"># הצגת cache DNS</span>
+ipconfig /flushdns        <span class="cmd-comment"># ניקוי cache</span>
+ipconfig /registerdns     <span class="cmd-comment"># רישום ידני ב-DNS</span>
+
+nslookup hackeru.com              <span class="cmd-comment"># שאילתת DNS בסיסית</span>
+nslookup -type=MX hackeru.com     <span class="cmd-comment"># MX records</span>
+nslookup -type=NS hackeru.com     <span class="cmd-comment"># NS records</span>
+nslookup 10.0.0.5                 <span class="cmd-comment"># reverse lookup</span>
+nslookup hackeru.com 8.8.8.8      <span class="cmd-comment"># שאילתה דרך DNS חיצוני</span>
+
+<span class="cmd-comment"># PowerShell מודרני</span>
+Resolve-DnsName hackeru.com
+Clear-DnsClientCache
+Get-DhcpServerv4Scope
+Get-DhcpServerv4Lease -ScopeId 10.0.0.0</code></pre>
+    </div>
+
+    <div class="cheat">
+      <h3>🏗️ סדר פעולות להקמת DHCP מאפס</h3>
+      <ol>
+        <li>קביעת IP סטטי לשרת.</li>
+        <li>חיבור לדומיין.</li>
+        <li>התקנת תפקיד DHCP.</li>
+        <li>אוטוריזציה דרך DC.</li>
+        <li>יצירת Scope (טווח, mask, gateway, DNS).</li>
+        <li>הוספת Exclusions אם צריך.</li>
+        <li>הוספת Reservations למכשירים קריטיים.</li>
+        <li>הפעלת ה-Scope.</li>
+        <li>בדיקה מלקוח: <code>ipconfig /release</code> ⟵ <code>/renew</code>.</li>
+      </ol>
+    </div>
+
+    <div class="cheat">
+      <h3>🌐 סדר פעולות להקמת DNS מאפס</h3>
+      <ol>
+        <li>התקנת תפקיד DNS (אוטומטי אם DC).</li>
+        <li>יצירת Forward Lookup Zone.</li>
+        <li>יצירת Reverse Lookup Zone (חובה ידנית!).</li>
+        <li>הוספת A/AAAA records לשרתים חשובים.</li>
+        <li>הוספת CNAME, MX, NS לפי הצורך.</li>
+        <li>הגדרת Forwarders ל-DNS חיצוני (8.8.8.8 / 1.1.1.1).</li>
+        <li>בדיקה: <code>nslookup</code> מהלקוח.</li>
+      </ol>
+    </div>
+
+    <div class="cheat">
+      <h3>🚨 פינת אבטחה - מבט פנטסטר</h3>
+      <ul>
+        <li><b>DHCP Spoofing/Starvation:</b> תוקף ברשת מנצל את ההצעות הראשונות. הגנה: DHCP Snooping בסוויצ'.</li>
+        <li><b>Rogue DHCP:</b> שרת DHCP זדוני מציע IP + DNS זדוני. הגנה: אוטוריזציה ב-AD, רק שרת מאושר עונה.</li>
+        <li><b>DNS Cache Poisoning:</b> הזרקת רשומה שקרית ל-cache. הגנה: DNSSEC, DoH/DoT.</li>
+        <li><b>DNS Tunneling:</b> נתונים מוסתרים בתוך שאילתות DNS לעקיפת חומת אש. ניטור על אורך וכמות.</li>
+        <li><b>Zone Transfer לא מאובטח:</b> תוקף מבקש AXFR ומקבל את כל ה-records. בדיקה: <code>dig axfr @ns1 domain.com</code>.</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <p>📘 מקור: HackerU - The Ethical Hacking Program | DHCP &amp; DNS Lesson</p>
+  <p>בנוי לשיעור של 5 שעות אקדמיות - תיאוריה + מעבדה מעשית</p>
+</footer>
+
+</div>
+
+</body>
+</html>
